@@ -65,7 +65,7 @@ class ProxmoxStatBar extends LitElement {
     return html`
       <span class="label">${this.label}</span>
       <div class="track">
-        <div class="fill ${this._colorClass()}" style="width:${p}%"></div>
+        <div class="fill ${this._colorClass()}" style="width:${p}%;${p > 0 ? 'min-width:2px' : ''}"></div>
       </div>
       <span class="value">${this.value}</span>
     `;

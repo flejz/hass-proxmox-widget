@@ -3,6 +3,7 @@ import { discoverProxmoxEntities } from './utils/entity-finder.js';
 import './components/stat-bar.js';
 import './components/node-row.js';
 import './components/vm-row.js';
+import './components/card-editor.js';
 
 const MODES = ['minimal', 'normal', 'dense'];
 
@@ -85,6 +86,14 @@ class ProxmoxCard extends LitElement {
       text-align: center;
     }
   `;
+
+  static getStubConfig() {
+    return { title: 'Proxmox', mode: 'normal' };
+  }
+
+  static getConfigElement() {
+    return document.createElement('proxmox-card-editor');
+  }
 
   setConfig(config) {
     if (!config) throw new Error('Invalid configuration');

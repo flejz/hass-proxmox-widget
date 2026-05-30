@@ -14,7 +14,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const b=globalThis,A=t=>t,w=b.trustedTypes,E=w?w.createPolicy("lit-html",{createHTML:t=>t}):void 0,S="$lit$",C=`lit$${Math.random().toFixed(9).slice(2)}$`,k="?"+C,P=`<${k}>`,M=document,U=()=>M.createComment(""),N=t=>null===t||"object"!=typeof t&&"function"!=typeof t,O=Array.isArray,H="[ \t\n\f\r]",T=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,R=/-->/g,z=/>/g,L=RegExp(`>|${H}(?:([^\\s"'>=/]+)(${H}*=${H}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),j=/'/g,D=/"/g,V=/^(?:script|style|textarea|title)$/i,B=(t=>(e,...s)=>({_$litType$:t,strings:e,values:s}))(1),I=Symbol.for("lit-noChange"),F=Symbol.for("lit-nothing"),W=new WeakMap,q=M.createTreeWalker(M,129);function K(t,e){if(!O(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==E?E.createHTML(e):e}const J=(t,e)=>{const s=t.length-1,i=[];let o,r=2===e?"<svg>":3===e?"<math>":"",n=T;for(let e=0;e<s;e++){const s=t[e];let a,l,c=-1,d=0;for(;d<s.length&&(n.lastIndex=d,l=n.exec(s),null!==l);)d=n.lastIndex,n===T?"!--"===l[1]?n=R:void 0!==l[1]?n=z:void 0!==l[2]?(V.test(l[2])&&(o=RegExp("</"+l[2],"g")),n=L):void 0!==l[3]&&(n=L):n===L?">"===l[0]?(n=o??T,c=-1):void 0===l[1]?c=-2:(c=n.lastIndex-l[2].length,a=l[1],n=void 0===l[3]?L:'"'===l[3]?D:j):n===D||n===j?n=L:n===R||n===z?n=T:(n=L,o=void 0);const h=n===L&&t[e+1].startsWith("/>")?" ":"";r+=n===T?s+P:c>=0?(i.push(a),s.slice(0,c)+S+s.slice(c)+C+h):s+C+(-2===c?e:h)}return[K(t,r+(t[s]||"<?>")+(2===e?"</svg>":3===e?"</math>":"")),i]};class Z{constructor({strings:t,_$litType$:e},s){let i;this.parts=[];let o=0,r=0;const n=t.length-1,a=this.parts,[l,c]=J(t,e);if(this.el=Z.createElement(l,s),q.currentNode=this.el.content,2===e||3===e){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes)}for(;null!==(i=q.nextNode())&&a.length<n;){if(1===i.nodeType){if(i.hasAttributes())for(const t of i.getAttributeNames())if(t.endsWith(S)){const e=c[r++],s=i.getAttribute(t).split(C),n=/([.?@])?(.*)/.exec(e);a.push({type:1,index:o,name:n[2],strings:s,ctor:"."===n[1]?tt:"?"===n[1]?et:"@"===n[1]?st:Y}),i.removeAttribute(t)}else t.startsWith(C)&&(a.push({type:6,index:o}),i.removeAttribute(t));if(V.test(i.tagName)){const t=i.textContent.split(C),e=t.length-1;if(e>0){i.textContent=w?w.emptyScript:"";for(let s=0;s<e;s++)i.append(t[s],U()),q.nextNode(),a.push({type:2,index:++o});i.append(t[e],U())}}}else if(8===i.nodeType)if(i.data===k)a.push({type:2,index:o});else{let t=-1;for(;-1!==(t=i.data.indexOf(C,t+1));)a.push({type:7,index:o}),t+=C.length-1}o++}}static createElement(t,e){const s=M.createElement("template");return s.innerHTML=t,s}}function G(t,e,s=t,i){if(e===I)return e;let o=void 0!==i?s._$Co?.[i]:s._$Cl;const r=N(e)?void 0:e._$litDirective$;return o?.constructor!==r&&(o?._$AO?.(!1),void 0===r?o=void 0:(o=new r(t),o._$AT(t,s,i)),void 0!==i?(s._$Co??=[])[i]=o:s._$Cl=o),void 0!==o&&(e=G(t,o._$AS(t,e.values),o,i)),e}class Q{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:s}=this._$AD,i=(t?.creationScope??M).importNode(e,!0);q.currentNode=i;let o=q.nextNode(),r=0,n=0,a=s[0];for(;void 0!==a;){if(r===a.index){let e;2===a.type?e=new X(o,o.nextSibling,this,t):1===a.type?e=new a.ctor(o,a.name,a.strings,this,t):6===a.type&&(e=new it(o,this,t)),this._$AV.push(e),a=s[++n]}r!==a?.index&&(o=q.nextNode(),r++)}return q.currentNode=M,i}p(t){let e=0;for(const s of this._$AV)void 0!==s&&(void 0!==s.strings?(s._$AI(t,s,e),e+=s.strings.length-2):s._$AI(t[e])),e++}}class X{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,s,i){this.type=2,this._$AH=F,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=s,this.options=i,this._$Cv=i?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return void 0!==e&&11===t?.nodeType&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=G(this,t,e),N(t)?t===F||null==t||""===t?(this._$AH!==F&&this._$AR(),this._$AH=F):t!==this._$AH&&t!==I&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):(t=>O(t)||"function"==typeof t?.[Symbol.iterator])(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==F&&N(this._$AH)?this._$AA.nextSibling.data=t:this.T(M.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:s}=t,i="number"==typeof s?this._$AC(t):(void 0===s.el&&(s.el=Z.createElement(K(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===i)this._$AH.p(e);else{const t=new Q(i,this),s=t.u(this.options);t.p(e),this.T(s),this._$AH=t}}_$AC(t){let e=W.get(t.strings);return void 0===e&&W.set(t.strings,e=new Z(t)),e}k(t){O(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let s,i=0;for(const o of t)i===e.length?e.push(s=new X(this.O(U()),this.O(U()),this,this.options)):s=e[i],s._$AI(o),i++;i<e.length&&(this._$AR(s&&s._$AB.nextSibling,i),e.length=i)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const e=A(t).nextSibling;A(t).remove(),t=e}}setConnected(t){void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t))}}class Y{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,s,i,o){this.type=1,this._$AH=F,this._$AN=void 0,this.element=t,this.name=e,this._$AM=i,this.options=o,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=F}_$AI(t,e=this,s,i){const o=this.strings;let r=!1;if(void 0===o)t=G(this,t,e,0),r=!N(t)||t!==this._$AH&&t!==I,r&&(this._$AH=t);else{const i=t;let n,a;for(t=o[0],n=0;n<o.length-1;n++)a=G(this,i[s+n],e,n),a===I&&(a=this._$AH[n]),r||=!N(a)||a!==this._$AH[n],a===F?t=F:t!==F&&(t+=(a??"")+o[n+1]),this._$AH[n]=a}r&&!i&&this.j(t)}j(t){t===F?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class tt extends Y{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===F?void 0:t}}class et extends Y{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==F)}}class st extends Y{constructor(t,e,s,i,o){super(t,e,s,i,o),this.type=5}_$AI(t,e=this){if((t=G(this,t,e,0)??F)===I)return;const s=this._$AH,i=t===F&&s!==F||t.capture!==s.capture||t.once!==s.once||t.passive!==s.passive,o=t!==F&&(s===F||i);i&&this.element.removeEventListener(this.name,this,s),o&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class it{constructor(t,e,s){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=s}get _$AU(){return this._$AM._$AU}_$AI(t){G(this,t)}}const ot=b.litHtmlPolyfillSupport;ot?.(Z,X),(b.litHtmlVersions??=[]).push("3.3.3");const rt=globalThis;
+const b=globalThis,A=t=>t,w=b.trustedTypes,E=w?w.createPolicy("lit-html",{createHTML:t=>t}):void 0,S="$lit$",C=`lit$${Math.random().toFixed(9).slice(2)}$`,P="?"+C,k=`<${P}>`,M=document,U=()=>M.createComment(""),N=t=>null===t||"object"!=typeof t&&"function"!=typeof t,O=Array.isArray,H="[ \t\n\f\r]",T=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,R=/-->/g,z=/>/g,D=RegExp(`>|${H}(?:([^\\s"'>=/]+)(${H}*=${H}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),L=/'/g,j=/"/g,V=/^(?:script|style|textarea|title)$/i,B=(t=>(e,...s)=>({_$litType$:t,strings:e,values:s}))(1),I=Symbol.for("lit-noChange"),F=Symbol.for("lit-nothing"),W=new WeakMap,q=M.createTreeWalker(M,129);function K(t,e){if(!O(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==E?E.createHTML(e):e}const J=(t,e)=>{const s=t.length-1,i=[];let o,r=2===e?"<svg>":3===e?"<math>":"",n=T;for(let e=0;e<s;e++){const s=t[e];let a,l,c=-1,d=0;for(;d<s.length&&(n.lastIndex=d,l=n.exec(s),null!==l);)d=n.lastIndex,n===T?"!--"===l[1]?n=R:void 0!==l[1]?n=z:void 0!==l[2]?(V.test(l[2])&&(o=RegExp("</"+l[2],"g")),n=D):void 0!==l[3]&&(n=D):n===D?">"===l[0]?(n=o??T,c=-1):void 0===l[1]?c=-2:(c=n.lastIndex-l[2].length,a=l[1],n=void 0===l[3]?D:'"'===l[3]?j:L):n===j||n===L?n=D:n===R||n===z?n=T:(n=D,o=void 0);const h=n===D&&t[e+1].startsWith("/>")?" ":"";r+=n===T?s+k:c>=0?(i.push(a),s.slice(0,c)+S+s.slice(c)+C+h):s+C+(-2===c?e:h)}return[K(t,r+(t[s]||"<?>")+(2===e?"</svg>":3===e?"</math>":"")),i]};class Z{constructor({strings:t,_$litType$:e},s){let i;this.parts=[];let o=0,r=0;const n=t.length-1,a=this.parts,[l,c]=J(t,e);if(this.el=Z.createElement(l,s),q.currentNode=this.el.content,2===e||3===e){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes)}for(;null!==(i=q.nextNode())&&a.length<n;){if(1===i.nodeType){if(i.hasAttributes())for(const t of i.getAttributeNames())if(t.endsWith(S)){const e=c[r++],s=i.getAttribute(t).split(C),n=/([.?@])?(.*)/.exec(e);a.push({type:1,index:o,name:n[2],strings:s,ctor:"."===n[1]?tt:"?"===n[1]?et:"@"===n[1]?st:Y}),i.removeAttribute(t)}else t.startsWith(C)&&(a.push({type:6,index:o}),i.removeAttribute(t));if(V.test(i.tagName)){const t=i.textContent.split(C),e=t.length-1;if(e>0){i.textContent=w?w.emptyScript:"";for(let s=0;s<e;s++)i.append(t[s],U()),q.nextNode(),a.push({type:2,index:++o});i.append(t[e],U())}}}else if(8===i.nodeType)if(i.data===P)a.push({type:2,index:o});else{let t=-1;for(;-1!==(t=i.data.indexOf(C,t+1));)a.push({type:7,index:o}),t+=C.length-1}o++}}static createElement(t,e){const s=M.createElement("template");return s.innerHTML=t,s}}function G(t,e,s=t,i){if(e===I)return e;let o=void 0!==i?s._$Co?.[i]:s._$Cl;const r=N(e)?void 0:e._$litDirective$;return o?.constructor!==r&&(o?._$AO?.(!1),void 0===r?o=void 0:(o=new r(t),o._$AT(t,s,i)),void 0!==i?(s._$Co??=[])[i]=o:s._$Cl=o),void 0!==o&&(e=G(t,o._$AS(t,e.values),o,i)),e}class Q{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:s}=this._$AD,i=(t?.creationScope??M).importNode(e,!0);q.currentNode=i;let o=q.nextNode(),r=0,n=0,a=s[0];for(;void 0!==a;){if(r===a.index){let e;2===a.type?e=new X(o,o.nextSibling,this,t):1===a.type?e=new a.ctor(o,a.name,a.strings,this,t):6===a.type&&(e=new it(o,this,t)),this._$AV.push(e),a=s[++n]}r!==a?.index&&(o=q.nextNode(),r++)}return q.currentNode=M,i}p(t){let e=0;for(const s of this._$AV)void 0!==s&&(void 0!==s.strings?(s._$AI(t,s,e),e+=s.strings.length-2):s._$AI(t[e])),e++}}class X{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,s,i){this.type=2,this._$AH=F,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=s,this.options=i,this._$Cv=i?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return void 0!==e&&11===t?.nodeType&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=G(this,t,e),N(t)?t===F||null==t||""===t?(this._$AH!==F&&this._$AR(),this._$AH=F):t!==this._$AH&&t!==I&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):(t=>O(t)||"function"==typeof t?.[Symbol.iterator])(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==F&&N(this._$AH)?this._$AA.nextSibling.data=t:this.T(M.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:s}=t,i="number"==typeof s?this._$AC(t):(void 0===s.el&&(s.el=Z.createElement(K(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===i)this._$AH.p(e);else{const t=new Q(i,this),s=t.u(this.options);t.p(e),this.T(s),this._$AH=t}}_$AC(t){let e=W.get(t.strings);return void 0===e&&W.set(t.strings,e=new Z(t)),e}k(t){O(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let s,i=0;for(const o of t)i===e.length?e.push(s=new X(this.O(U()),this.O(U()),this,this.options)):s=e[i],s._$AI(o),i++;i<e.length&&(this._$AR(s&&s._$AB.nextSibling,i),e.length=i)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const e=A(t).nextSibling;A(t).remove(),t=e}}setConnected(t){void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t))}}class Y{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,s,i,o){this.type=1,this._$AH=F,this._$AN=void 0,this.element=t,this.name=e,this._$AM=i,this.options=o,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=F}_$AI(t,e=this,s,i){const o=this.strings;let r=!1;if(void 0===o)t=G(this,t,e,0),r=!N(t)||t!==this._$AH&&t!==I,r&&(this._$AH=t);else{const i=t;let n,a;for(t=o[0],n=0;n<o.length-1;n++)a=G(this,i[s+n],e,n),a===I&&(a=this._$AH[n]),r||=!N(a)||a!==this._$AH[n],a===F?t=F:t!==F&&(t+=(a??"")+o[n+1]),this._$AH[n]=a}r&&!i&&this.j(t)}j(t){t===F?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class tt extends Y{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===F?void 0:t}}class et extends Y{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==F)}}class st extends Y{constructor(t,e,s,i,o){super(t,e,s,i,o),this.type=5}_$AI(t,e=this){if((t=G(this,t,e,0)??F)===I)return;const s=this._$AH,i=t===F&&s!==F||t.capture!==s.capture||t.once!==s.once||t.passive!==s.passive,o=t!==F&&(s===F||i);i&&this.element.removeEventListener(this.name,this,s),o&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class it{constructor(t,e,s){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=s}get _$AU(){return this._$AM._$AU}_$AI(t){G(this,t)}}const ot=b.litHtmlPolyfillSupport;ot?.(Z,X),(b.litHtmlVersions??=[]).push("3.3.3");const rt=globalThis;
 /**
  * @license
  * Copyright 2017 Google LLC
@@ -66,10 +66,10 @@ const b=globalThis,A=t=>t,w=b.trustedTypes,E=w?w.createPolicy("lit-html",{create
   `;_colorClass(){const t=this.percent??0;return t>=90?"error":t>=70?"warning":"success"}render(){const t=Math.min(100,Math.max(0,this.percent??0));return B`
       <span class="label">${this.label}</span>
       <div class="track">
-        <div class="fill ${this._colorClass()}" style="width:${t}%"></div>
+        <div class="fill ${this._colorClass()}" style="width:${t}%;${t>0?"min-width:2px":""}"></div>
       </div>
       <span class="value">${this.value}</span>
-    `}}function mt(t){return null==t?"—":parseFloat(t).toFixed(1)+"%"}customElements.define("proxmox-stat-bar",pt);class ut extends nt{static properties={group:{type:Object},mode:{type:String}};static styles=r`
+    `}}function mt(t){return null==t?"—":parseFloat(t).toFixed(1)+"%"}function ut(t){if(null==t)return"—";const e=parseFloat(t);return isNaN(e)?"—":e>=1?e.toFixed(1)+" GiB":(1024*e).toFixed(0)+" MiB"}customElements.define("proxmox-stat-bar",pt);class _t extends nt{static properties={group:{type:Object},mode:{type:String}};static styles=r`
     :host {
       display: block;
     }
@@ -136,11 +136,11 @@ const b=globalThis,A=t=>t,w=b.trustedTypes,E=w?w.createPolicy("lit-html",{create
       ${"minimal"!==t?B`
             <proxmox-stat-bar
               .label=${"DSK"}
-              .value=${function(t){if(null==t)return"—";const e=parseFloat(t);return isNaN(e)?"—":e>=1?e.toFixed(1)+" GiB":(1024*e).toFixed(0)+" MiB"}(o)}
+              .value=${ut(o)}
               .percent=${c}
             ></proxmox-stat-bar>
           `:""}
-    `}}customElements.define("proxmox-node-row",ut);class _t extends nt{static properties={group:{type:Object},mode:{type:String}};static styles=r`
+    `}}customElements.define("proxmox-node-row",_t);class ft extends nt{static properties={group:{type:Object},mode:{type:String}};static styles=r`
     :host {
       display: flex;
       align-items: center;
@@ -193,19 +193,56 @@ const b=globalThis,A=t=>t,w=b.trustedTypes,E=w?w.createPolicy("lit-html",{create
       font-variant-numeric: tabular-nums;
       font-size: 0.78em;
       text-align: right;
-      width: 3.5em;
+      width: 3.2em;
     }
-  `;_s(t){return this.group?.entities?.[t]?.state?.state??null}render(){const{mode:t,group:e}=this,s=this._s("running"),i=this._s("cpu"),o=this._s("memory_pct"),r="on"===s,n="vm"===e?.type?"VM":"CT",a="minimal"===t;return B`
-      <div class="dot ${r?"on":"off"}"></div>
+    .stat-wide {
+      color: var(--secondary-text-color);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.78em;
+      text-align: right;
+      width: 4em;
+    }
+  `;_s(t){return this.group?.entities?.[t]?.state?.state??null}render(){const{mode:t,group:e}=this,s=this._s("running"),i=this._s("cpu"),o=this._s("memory_pct"),r=this._s("disk_gb");this._s("disk_max_gb");const n="on"===s,a="vm"===e?.type?"VM":"CT",l="minimal"===t;return B`
+      <div class="dot ${n?"on":"off"}"></div>
       <span class="name">${e?.name??"—"}</span>
-      ${a?"":B`<span class="badge">${n}</span>`}
-      ${a?"":B`
+      ${l?"":B`<span class="badge">${a}</span>`}
+      ${l?"":B`
             <div class="stats">
               <span class="stat">${mt(i)}</span>
               <span class="stat">${mt(o)}</span>
+              <span class="stat-wide">${ut(r)}</span>
             </div>
           `}
-    `}}customElements.define("proxmox-vm-row",_t);const ft=["minimal","normal","dense"];class $t extends nt{static properties={hass:{attribute:!1},_config:{state:!0},_mode:{state:!0}};static styles=r`
+    `}}customElements.define("proxmox-vm-row",ft);class $t extends nt{static properties={hass:{attribute:!1},_config:{state:!0}};static styles=r`
+    .editor {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px;
+    }
+    ha-textfield, ha-select {
+      width: 100%;
+    }
+  `;setConfig(t){this._config={title:"Proxmox",mode:"normal",...t}}_changed(t,e){this._config&&this.dispatchEvent(new CustomEvent("config-changed",{detail:{config:{...this._config,[t]:e}},bubbles:!0,composed:!0}))}render(){return this._config?B`
+      <div class="editor">
+        <ha-textfield
+          label="Title"
+          .value=${this._config.title??"Proxmox"}
+          @change=${t=>this._changed("title",t.target.value)}
+        ></ha-textfield>
+
+        <ha-select
+          label="Display mode"
+          .value=${this._config.mode??"normal"}
+          @value-changed=${t=>this._changed("mode",t.detail.value)}
+          fixedMenuPosition
+        >
+          <mwc-list-item value="minimal">Minimal — CPU + RAM only</mwc-list-item>
+          <mwc-list-item value="normal">Normal — full stats</mwc-list-item>
+          <mwc-list-item value="dense">Dense — compact layout</mwc-list-item>
+        </ha-select>
+      </div>
+    `:B``}}customElements.define("proxmox-card-editor",$t);const gt=["minimal","normal","dense"];class vt extends nt{static properties={hass:{attribute:!1},_config:{state:!0},_mode:{state:!0}};static styles=r`
     :host {
       display: block;
     }
@@ -276,7 +313,7 @@ const b=globalThis,A=t=>t,w=b.trustedTypes,E=w?w.createPolicy("lit-html",{create
       padding: 12px 0;
       text-align: center;
     }
-  `;setConfig(t){if(!t)throw new Error("Invalid configuration");this._config={title:"Proxmox",mode:"normal",exclude:[],...t},ft.includes(this._config.mode)||(this._config.mode="normal"),this._mode=null}get _activeMode(){return this._mode??this._config?.mode??"normal"}_switchMode(t){this._mode=t}render(){if(!this.hass||!this._config)return B``;const{nodes:t,vms:e}=function(t,e){if(!t?.entities)return{nodes:[],vms:[]};const s=new Set(e?.exclude??[]),i=new Map;for(const[e,o]of Object.entries(t.entities))"proxmoxve"===o.platform&&(s.has(e)||o.device_id&&(i.has(o.device_id)||i.set(o.device_id,[]),i.get(o.device_id).push({entity_id:e,translation_key:o.translation_key})));const o=[],r=[];for(const[e,s]of i){const i=t.devices?.[e],n=dt[i?.model];if(!n)continue;const a=i?.name_by_user||i?.name||e,l=ht(n),c={};for(const{entity_id:e,translation_key:i}of s){const s=l[i];if(!s||s in c)continue;const o=t.states?.[e]??null;c[s]={entity_id:e,state:o}}const d={type:n,name:a,device_id:e,node_device_id:i?.via_device_id,entities:c};"node"===n?o.push(d):r.push(d)}return o.sort((t,e)=>t.name.localeCompare(e.name)),r.sort((t,e)=>t.name.localeCompare(e.name)),{nodes:o,vms:r}}(this.hass,this._config),s=this._activeMode;return B`
+  `;static getStubConfig(){return{title:"Proxmox",mode:"normal"}}static getConfigElement(){return document.createElement("proxmox-card-editor")}setConfig(t){if(!t)throw new Error("Invalid configuration");this._config={title:"Proxmox",mode:"normal",exclude:[],...t},gt.includes(this._config.mode)||(this._config.mode="normal"),this._mode=null}get _activeMode(){return this._mode??this._config?.mode??"normal"}_switchMode(t){this._mode=t}render(){if(!this.hass||!this._config)return B``;const{nodes:t,vms:e}=function(t,e){if(!t?.entities)return{nodes:[],vms:[]};const s=new Set(e?.exclude??[]),i=new Map;for(const[e,o]of Object.entries(t.entities))"proxmoxve"===o.platform&&(s.has(e)||o.device_id&&(i.has(o.device_id)||i.set(o.device_id,[]),i.get(o.device_id).push({entity_id:e,translation_key:o.translation_key})));const o=[],r=[];for(const[e,s]of i){const i=t.devices?.[e],n=dt[i?.model];if(!n)continue;const a=i?.name_by_user||i?.name||e,l=ht(n),c={};for(const{entity_id:e,translation_key:i}of s){const s=l[i];if(!s||s in c)continue;const o=t.states?.[e]??null;c[s]={entity_id:e,state:o}}const d={type:n,name:a,device_id:e,node_device_id:i?.via_device_id,entities:c};"node"===n?o.push(d):r.push(d)}return o.sort((t,e)=>t.name.localeCompare(e.name)),r.sort((t,e)=>t.name.localeCompare(e.name)),{nodes:o,vms:r}}(this.hass,this._config),s=this._activeMode;return B`
       <ha-card>
         <div class="card-content">
           ${this._renderHeader(s)}
@@ -287,7 +324,7 @@ const b=globalThis,A=t=>t,w=b.trustedTypes,E=w?w.createPolicy("lit-html",{create
       <div class="header">
         <span class="title">${this._config.title}</span>
         <div class="mode-switcher" role="group" aria-label="Display mode">
-          ${ft.map(e=>B`
+          ${gt.map(e=>B`
             <button
               class="mode-btn"
               aria-pressed=${t===e?"true":"false"}
@@ -318,4 +355,4 @@ const b=globalThis,A=t=>t,w=b.trustedTypes,E=w?w.createPolicy("lit-html",{create
           <proxmox-vm-row .group=${t} mode=${e}></proxmox-vm-row>
         `)}
       </div>
-    `}getCardSize(){return 3}}customElements.define("proxmox-card",$t),window.customCards=window.customCards||[],window.customCards.push({type:"proxmox-card",name:"Proxmox Card",description:"Monitor Proxmox VE nodes, VMs, and containers",preview:!1,documentationURL:"https://github.com/flejz/hass-proxmox-widget"});
+    `}getCardSize(){return 3}}customElements.define("proxmox-card",vt),window.customCards=window.customCards||[],window.customCards.push({type:"proxmox-card",name:"Proxmox Card",description:"Monitor Proxmox VE nodes, VMs, and containers",preview:!1,documentationURL:"https://github.com/flejz/hass-proxmox-widget"});

@@ -60,7 +60,14 @@ class ProxmoxVmRow extends LitElement {
       font-variant-numeric: tabular-nums;
       font-size: 0.78em;
       text-align: right;
-      width: 3.5em;
+      width: 3.2em;
+    }
+    .stat-wide {
+      color: var(--secondary-text-color);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.78em;
+      text-align: right;
+      width: 4em;
     }
   `;
 
@@ -74,6 +81,8 @@ class ProxmoxVmRow extends LitElement {
     const runningState = this._s('running'); // binary_sensor state: 'on'/'off'
     const cpu = this._s('cpu');
     const memPct = this._s('memory_pct');
+    const diskGb = this._s('disk_gb');
+    const diskMaxGb = this._s('disk_max_gb');
 
     const isOn = runningState === 'on';
     const typeBadge = group?.type === 'vm' ? 'VM' : 'CT';
@@ -90,6 +99,7 @@ class ProxmoxVmRow extends LitElement {
             <div class="stats">
               <span class="stat">${formatPercent(cpu)}</span>
               <span class="stat">${formatPercent(memPct)}</span>
+              <span class="stat-wide">${formatGiB(diskGb)}</span>
             </div>
           `
         : ''}
