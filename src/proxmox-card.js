@@ -171,6 +171,9 @@ class ProxmoxCard extends LitElement {
       title: 'Proxmox',
       mode: 'normal',
       exclude: [],
+      show_network: true,
+      show_storage: true,
+      sort_vms: 'name',
       ...config,
     };
     if (!MODES.includes(this._config.mode)) {
@@ -187,10 +190,22 @@ class ProxmoxCard extends LitElement {
     this._mode = mode;
   }
 
+  _sortVms(vms) {
+    const key = this._config?.sort_vms ?? 'name';
+    if (key === 'name') return vms; // already sorted by entity-finder
+    return [...vms].sort((a, b) => {
+      const stateOf = (vm, role) => parseFloat(vm.entities?.[role]?.state?.state) || 0;
+      const roleMap = { cpu: 'cpu', ram: 'memory_pct', disk: 'disk_gb' };
+      const role = roleMap[key] ?? 'cpu';
+      return stateOf(b, role) - stateOf(a, role); // descending
+    });
+  }
+
   render() {
     if (!this.hass || !this._config) return html``;
 
-    const { nodes, vms, storages } = discoverProxmoxEntities(this.hass, this._config);
+    const { nodes, vms: rawVms, storages } = discoverProxmoxEntities(this.hass, this._config);
+    const vms = this._sortVms(rawVms);
     const mode = this._activeMode;
 
     return html`
@@ -246,10 +261,10 @@ class ProxmoxCard extends LitElement {
             ${nodeVms.length > 0
               ? html`
                   ${this._renderVmSection(nodeVms, mode)}
-                  ${this._renderNetworkSection(nodeVms, mode)}
+                  ${this._config.show_network !== false ? this._renderNetworkSection(nodeVms, mode) : ''}
                 `
               : ''}
-            ${nodeStorages.length > 0
+            ${nodeStorages.length > 0 && this._config.show_storage !== false
               ? this._renderStorageSection(nodeStorages, mode)
               : ''}
           </div>
@@ -259,15 +274,15 @@ class ProxmoxCard extends LitElement {
         ? html`
             <hr class="node-divider">
             ${this._renderVmSection(orphanVms, mode)}
-            ${this._renderNetworkSection(orphanVms, mode)}
+            ${this._config.show_network !== false ? this._renderNetworkSection(orphanVms, mode) : ''}
           `
         : ''}
-      ${storages.filter(s => !nodes.find(n => n.device_id === s.node_device_id)).length > 0
-        ? this._renderStorageSection(
-            storages.filter(s => !nodes.find(n => n.device_id === s.node_device_id)),
-            mode
-          )
-        : ''}
+      ${(() => {
+          const orphanStorages = storages.filter(s => !nodes.find(n => n.device_id === s.node_device_id));
+          return orphanStorages.length > 0 && this._config.show_storage !== false
+            ? this._renderStorageSection(orphanStorages, mode)
+            : '';
+        })()}
     `;
   }
 
