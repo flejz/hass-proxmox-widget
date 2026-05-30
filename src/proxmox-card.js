@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { discoverProxmoxEntities } from './utils/entity-finder.js';
+import { formatGiB, formatNetMbs } from './utils/formatters.js';
 import './components/stat-bar.js';
 import './components/node-row.js';
 import './components/vm-row.js';
@@ -64,13 +65,42 @@ class ProxmoxCard extends LitElement {
       border-top: 1px solid var(--divider-color);
       margin: 10px 0;
     }
-    .vm-section-label {
+    .section-label {
       color: var(--secondary-text-color);
       font-size: 0.7em;
       font-weight: 500;
       letter-spacing: 0.06em;
-      margin: 8px 0 4px;
       text-transform: uppercase;
+    }
+    /* VMs & Containers header with column labels */
+    .vm-section-header {
+      display: flex;
+      align-items: center;
+      margin: 8px 0 2px;
+    }
+    .vm-section-title {
+      flex: 1;
+      color: var(--secondary-text-color);
+      font-size: 0.7em;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .vm-col-labels {
+      display: flex;
+      gap: 2px;
+      font-size: 0.62em;
+      color: var(--secondary-text-color);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .vcl {
+      text-align: right;
+      width: 3.2em;
+    }
+    .vcl-wide {
+      text-align: right;
+      width: 4em;
     }
     .vm-list {
       display: flex;
@@ -78,6 +108,46 @@ class ProxmoxCard extends LitElement {
     }
     .vm-list[data-mode='dense'] proxmox-vm-row {
       border-bottom: 1px solid var(--divider-color, transparent);
+    }
+    /* Network section */
+    .net-section {
+      margin-top: 4px;
+    }
+    .net-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 0;
+      font-size: 0.82em;
+    }
+    .net-name {
+      flex: 1;
+      color: var(--primary-text-color);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .net-val {
+      font-variant-numeric: tabular-nums;
+      color: var(--secondary-text-color);
+      font-size: 0.88em;
+      min-width: 5.5em;
+      text-align: right;
+    }
+    .net-dir {
+      opacity: 0.55;
+    }
+    /* Storage section */
+    .storage-section {
+      margin-top: 4px;
+    }
+    .storage-item {
+      margin-bottom: 4px;
+    }
+    .storage-name {
+      font-size: 0.8em;
+      color: var(--primary-text-color);
+      margin-bottom: 1px;
     }
     .empty {
       color: var(--secondary-text-color);
@@ -103,11 +173,10 @@ class ProxmoxCard extends LitElement {
       exclude: [],
       ...config,
     };
-    // Validate mode
     if (!MODES.includes(this._config.mode)) {
       this._config.mode = 'normal';
     }
-    this._mode = null; // reset user override on config change
+    this._mode = null;
   }
 
   get _activeMode() {
@@ -121,7 +190,7 @@ class ProxmoxCard extends LitElement {
   render() {
     if (!this.hass || !this._config) return html``;
 
-    const { nodes, vms } = discoverProxmoxEntities(this.hass, this._config);
+    const { nodes, vms, storages } = discoverProxmoxEntities(this.hass, this._config);
     const mode = this._activeMode;
 
     return html`
@@ -130,7 +199,7 @@ class ProxmoxCard extends LitElement {
           ${this._renderHeader(mode)}
           ${nodes.length === 0 && vms.length === 0
             ? html`<div class="empty">No Proxmox entities found.<br>Configure the Proxmox VE integration in Home Assistant.</div>`
-            : this._renderNodes(nodes, vms, mode)}
+            : this._renderNodes(nodes, vms, storages, mode)}
         </div>
       </ha-card>
     `;
@@ -153,29 +222,35 @@ class ProxmoxCard extends LitElement {
     `;
   }
 
-  _renderNodes(nodes, vms, mode) {
-    // VMs without a matching node (shouldn't happen normally, but handle gracefully)
+  _renderNodes(nodes, vms, storages, mode) {
     const orphanVms = vms.filter(
       (vm) => !nodes.find((n) => n.device_id === vm.node_device_id)
     );
 
     if (nodes.length === 0) {
-      // No nodes discovered — show all VMs ungrouped
-      return html`${this._renderVmList(vms, mode)}`;
+      return html`
+        ${this._renderVmSection(vms, mode)}
+        ${this._renderNetworkSection(vms, mode)}
+        ${this._renderStorageSection(storages, mode)}
+      `;
     }
 
     return html`
       ${nodes.map((node, idx) => {
         const nodeVms = vms.filter((vm) => vm.node_device_id === node.device_id);
+        const nodeStorages = storages.filter((s) => s.node_device_id === node.device_id);
         return html`
           ${idx > 0 ? html`<hr class="node-divider">` : ''}
           <div class="node-block">
             <proxmox-node-row .group=${node} .mode=${mode}></proxmox-node-row>
-            ${nodeVms.length > 0 && mode !== 'minimal'
+            ${nodeVms.length > 0
               ? html`
-                  <div class="vm-section-label">VMs &amp; Containers</div>
-                  ${this._renderVmList(nodeVms, mode)}
+                  ${this._renderVmSection(nodeVms, mode)}
+                  ${this._renderNetworkSection(nodeVms, mode)}
                 `
+              : ''}
+            ${nodeStorages.length > 0
+              ? this._renderStorageSection(nodeStorages, mode)
               : ''}
           </div>
         `;
@@ -183,15 +258,34 @@ class ProxmoxCard extends LitElement {
       ${orphanVms.length > 0
         ? html`
             <hr class="node-divider">
-            <div class="vm-section-label">Other</div>
-            ${this._renderVmList(orphanVms, mode)}
+            ${this._renderVmSection(orphanVms, mode)}
+            ${this._renderNetworkSection(orphanVms, mode)}
           `
+        : ''}
+      ${storages.filter(s => !nodes.find(n => n.device_id === s.node_device_id)).length > 0
+        ? this._renderStorageSection(
+            storages.filter(s => !nodes.find(n => n.device_id === s.node_device_id)),
+            mode
+          )
         : ''}
     `;
   }
 
-  _renderVmList(vmList, mode) {
+  _renderVmSection(vmList, mode) {
+    if (!vmList.length) return html``;
     return html`
+      <div class="vm-section-header">
+        <span class="vm-section-title">VMs &amp; Containers</span>
+        ${mode !== 'minimal'
+          ? html`
+              <div class="vm-col-labels">
+                <span class="vcl">CPU</span>
+                <span class="vcl">MEM</span>
+                <span class="vcl-wide">DSK</span>
+              </div>
+            `
+          : ''}
+      </div>
       <div class="vm-list" data-mode=${mode}>
         ${vmList.map((vm) => html`
           <proxmox-vm-row .group=${vm} mode=${mode}></proxmox-vm-row>
@@ -200,7 +294,56 @@ class ProxmoxCard extends LitElement {
     `;
   }
 
-  // Required for HA card editor / size computation
+  _renderNetworkSection(vmList, mode) {
+    if (mode === 'minimal') return html``;
+    const withNet = vmList.filter(
+      (vm) => vm.entities.net_in_mbs || vm.entities.net_out_mbs
+    );
+    if (!withNet.length) return html``;
+
+    return html`
+      <div class="section-label" style="margin-top:10px">Network</div>
+      <div class="net-section">
+        ${withNet.map((vm) => {
+          const netIn = vm.entities.net_in_mbs?.state?.state;
+          const netOut = vm.entities.net_out_mbs?.state?.state;
+          return html`
+            <div class="net-row">
+              <span class="net-name">${vm.name}</span>
+              <span class="net-val"><span class="net-dir">↑</span> ${formatNetMbs(netOut)}</span>
+              <span class="net-val"><span class="net-dir">↓</span> ${formatNetMbs(netIn)}</span>
+            </div>
+          `;
+        })}
+      </div>
+    `;
+  }
+
+  _renderStorageSection(storageList, mode) {
+    if (mode === 'minimal') return html``;
+    if (!storageList.length) return html``;
+
+    return html`
+      <div class="section-label" style="margin-top:10px">Storage</div>
+      <div class="storage-section">
+        ${storageList.map((s) => {
+          const usedGb = s.entities.used_gb?.state?.state;
+          const pct = parseFloat(s.entities.used_pct?.state?.state) || 0;
+          return html`
+            <div class="storage-item">
+              <div class="storage-name">${s.name}</div>
+              <proxmox-stat-bar
+                .label=${' '}
+                .value=${formatGiB(usedGb)}
+                .percent=${pct}
+              ></proxmox-stat-bar>
+            </div>
+          `;
+        })}
+      </div>
+    `;
+  }
+
   getCardSize() {
     return 3;
   }
