@@ -1,110 +1,75 @@
-const TRANSLATION_KEY_TO_ROLE = {
-  cpu_used_percentage: 'cpu',
-  memory_used_percentage: 'memory_pct',
-  memory_used: 'memory',
-  disk_used: 'disk',
-  disk_used_percentage: 'disk_pct',
-  network_in: 'net_in',
-  network_out: 'net_out',
-  uptime: 'uptime',
-  running: 'running',
-  backup_status: 'backup',
+// Translation keys from the official proxmoxve integration
+const NODE_KEY_MAP = {
+  node_cpu: 'cpu',
+  node_memory_percentage: 'memory_pct',
+  node_memory: 'memory_gb',
+  node_disk: 'disk_gb',
+  node_max_disk: 'disk_max_gb',
+  node_uptime: 'uptime_h',
 };
 
-const NODE_ENTITY_KEYS = ['cpu', 'memory_pct', 'memory', 'disk', 'disk_pct', 'net_in', 'net_out', 'uptime'];
-const VM_ENTITY_KEYS = ['running', 'cpu', 'memory_pct', 'memory'];
+const CONTAINER_KEY_MAP = {
+  container_cpu: 'cpu',
+  container_memory_percentage: 'memory_pct',
+  container_memory: 'memory_gb',
+  container_disk: 'disk_gb',
+  container_max_disk: 'disk_max_gb',
+  container_uptime: 'uptime_h',
+  container_netin: 'net_in_mbs',
+  container_netout: 'net_out_mbs',
+  status: 'running', // binary_sensor, state 'on'/'off'
+};
 
-function roleFromEntityId(entity_id) {
-  const id = entity_id.toLowerCase();
+// device.model values from the integration
+const MODEL_TO_TYPE = {
+  Node: 'node',
+  Container: 'lxc',
+  QEMU: 'vm',
+};
 
-  if (id.includes('cpu')) return 'cpu';
-  if (id.includes('memory_used_percentage') || (id.includes('memory') && id.includes('percent'))) return 'memory_pct';
-  if (id.includes('memory_used') || (id.includes('memory') && !id.includes('max') && !id.includes('percent'))) return 'memory';
-  if (id.includes('disk_used_percentage') || (id.includes('disk') && id.includes('percent'))) return 'disk_pct';
-  if (id.includes('disk_used') || (id.includes('disk') && !id.includes('max') && !id.includes('percent'))) return 'disk';
-  if (id.includes('network_in') || id.includes('net_in')) return 'net_in';
-  if (id.includes('network_out') || id.includes('net_out')) return 'net_out';
-  if (id.includes('uptime')) return 'uptime';
-  if (id.includes('running')) return 'running';
-  if (id.includes('backup')) return 'backup';
-
-  return null;
+function keyMapForType(type) {
+  return type === 'node' ? NODE_KEY_MAP : CONTAINER_KEY_MAP;
 }
 
-/**
- * discoverProxmoxEntities(hass, config)
- * Returns { nodes: NodeGroup[], vms: VmGroup[] } discovered from the HA entity/device registry.
- */
 export function discoverProxmoxEntities(hass, config) {
   if (!hass?.entities) return { nodes: [], vms: [] };
 
-  const exclude = config?.exclude ?? [];
+  const exclude = new Set(config?.exclude ?? []);
 
-  // Collect all proxmoxve entities grouped by device_id
-  const deviceGroups = {};
-
+  // Group entities by device_id
+  const byDevice = new Map();
   for (const [entity_id, entry] of Object.entries(hass.entities)) {
     if (entry.platform !== 'proxmoxve') continue;
-    if (exclude.includes(entity_id)) continue;
+    if (exclude.has(entity_id)) continue;
     if (!entry.device_id) continue;
-
-    const { device_id, translation_key } = entry;
-    if (!deviceGroups[device_id]) deviceGroups[device_id] = [];
-    deviceGroups[device_id].push({ entity_id, translation_key });
+    if (!byDevice.has(entry.device_id)) byDevice.set(entry.device_id, []);
+    byDevice.get(entry.device_id).push({ entity_id, translation_key: entry.translation_key });
   }
 
   const nodes = [];
   const vms = [];
 
-  for (const [device_id, entries] of Object.entries(deviceGroups)) {
-    // Build role map: translation_key takes precedence; entity_id pattern is fallback
-    const roleMap = {};
-
-    for (const { entity_id, translation_key } of entries) {
-      const role = (translation_key && TRANSLATION_KEY_TO_ROLE[translation_key]) ?? roleFromEntityId(entity_id);
-      if (!role) continue;
-      // Prefer translation_key-derived roles over fallback-derived ones
-      const existing = roleMap[role];
-      if (!existing) {
-        roleMap[role] = { entity_id, fromTranslation: !!(translation_key && TRANSLATION_KEY_TO_ROLE[translation_key]) };
-      } else if (!existing.fromTranslation && translation_key && TRANSLATION_KEY_TO_ROLE[translation_key]) {
-        roleMap[role] = { entity_id, fromTranslation: true };
-      }
-    }
-
+  for (const [device_id, entries] of byDevice) {
     const device = hass.devices?.[device_id];
+    const type = MODEL_TO_TYPE[device?.model];
+    if (!type) continue; // skip Storage and unknown device types
+
     const name = device?.name_by_user || device?.name || device_id;
+    const keyMap = keyMapForType(type);
 
-    const toEntry = (role) => {
-      const mapped = roleMap[role];
-      if (!mapped) return undefined;
-      const state = hass.states?.[mapped.entity_id] ?? null;
-      return { entity_id: mapped.entity_id, state };
-    };
-
-    const isVm = !!roleMap['running'];
-
-    if (isVm) {
-      const model = device?.model?.toLowerCase();
-      const type = model === 'lxc' ? 'lxc' : 'vm';
-      const node_device_id = device?.via_device_id;
-
-      const entities = {};
-      for (const key of VM_ENTITY_KEYS) {
-        const entry = toEntry(key);
-        if (entry !== undefined) entities[key] = entry;
-      }
-
-      vms.push({ type, name, device_id, node_device_id, entities });
-    } else {
-      const entities = {};
-      for (const key of NODE_ENTITY_KEYS) {
-        const entry = toEntry(key);
-        if (entry !== undefined) entities[key] = entry;
-      }
-
-      nodes.push({ type: 'node', name, device_id, entities });
+    // Build entity map using translation_key
+    const entityMap = {};
+    for (const { entity_id, translation_key } of entries) {
+      const role = keyMap[translation_key];
+      if (!role || role in entityMap) continue;
+      const state = hass.states?.[entity_id] ?? null;
+      entityMap[role] = { entity_id, state };
     }
+
+    const group = { type, name, device_id, node_device_id: device?.via_device_id, entities: entityMap };
+
+    if (type === 'node') nodes.push(group);
+    else vms.push(group);
   }
 
   nodes.sort((a, b) => a.name.localeCompare(b.name));

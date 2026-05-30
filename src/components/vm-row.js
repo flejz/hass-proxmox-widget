@@ -1,5 +1,5 @@
 import { LitElement, html, css } from 'lit';
-import { formatPercent } from '../utils/formatters.js';
+import { formatPercent, formatGiB, formatNetMbs } from '../utils/formatters.js';
 
 class ProxmoxVmRow extends LitElement {
   static properties = {
@@ -64,19 +64,19 @@ class ProxmoxVmRow extends LitElement {
     }
   `;
 
-  _e(key) {
+  _s(key) {
     return this.group?.entities?.[key]?.state?.state ?? null;
   }
 
   render() {
     const { mode, group } = this;
 
-    const runningState = this._e('running');
-    const cpuState = this._e('cpu');
-    const memPctState = this._e('memory_pct');
+    const runningState = this._s('running'); // binary_sensor state: 'on'/'off'
+    const cpu = this._s('cpu');
+    const memPct = this._s('memory_pct');
 
     const isOn = runningState === 'on';
-    const typeBadge = group?.type === 'lxc' ? 'CT' : 'VM';
+    const typeBadge = group?.type === 'vm' ? 'VM' : 'CT';
     const minimal = mode === 'minimal';
 
     return html`
@@ -88,8 +88,8 @@ class ProxmoxVmRow extends LitElement {
       ${!minimal
         ? html`
             <div class="stats">
-              <span class="stat">${formatPercent(cpuState)}</span>
-              <span class="stat">${formatPercent(memPctState)}</span>
+              <span class="stat">${formatPercent(cpu)}</span>
+              <span class="stat">${formatPercent(memPct)}</span>
             </div>
           `
         : ''}

@@ -3,25 +3,34 @@ export function formatPercent(v) {
   return parseFloat(v).toFixed(1) + '%';
 }
 
-export function formatBytes(bytes) {
-  if (bytes == null) return '—';
-  if (bytes >= 1_073_741_824) return (bytes / 1_073_741_824).toFixed(1) + ' GiB';
-  return Math.round(bytes / 1_048_576) + ' MiB';
+// Input: GB (integration reports memory/disk in GB already)
+export function formatGiB(gb) {
+  if (gb == null) return '—';
+  const n = parseFloat(gb);
+  if (isNaN(n)) return '—';
+  if (n >= 1) return n.toFixed(1) + ' GiB';
+  return (n * 1024).toFixed(0) + ' MiB';
 }
 
-export function formatUptime(seconds) {
-  if (seconds == null) return '—';
-  const d = Math.floor(seconds / 86400);
-  const h = Math.floor((seconds % 86400) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
+// Input: hours (integration reports uptime in hours)
+export function formatUptime(hours) {
+  if (hours == null) return '—';
+  const n = parseFloat(hours);
+  if (isNaN(n)) return '—';
+  const d = Math.floor(n / 24);
+  const h = Math.floor(n % 24);
+  const m = Math.floor((n % 1) * 60);
   if (d > 0) return `${d}d ${h}h`;
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
 
-export function formatNet(bps) {
-  if (bps == null) return '—';
-  if (bps >= 1_000_000) return (bps / 1_000_000).toFixed(1) + ' MB/s';
-  if (bps >= 1_000) return (bps / 1_000).toFixed(1) + ' KB/s';
-  return Math.round(bps) + ' B/s';
+// Input: MB/s (integration reports network in MB/s)
+export function formatNetMbs(mbs) {
+  if (mbs == null) return '—';
+  const n = parseFloat(mbs);
+  if (isNaN(n)) return '—';
+  if (n >= 1) return n.toFixed(1) + ' MB/s';
+  if (n >= 0.001) return (n * 1024).toFixed(1) + ' KB/s';
+  return (n * 1024 * 1024).toFixed(0) + ' B/s';
 }
