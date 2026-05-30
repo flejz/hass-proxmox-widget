@@ -1,5 +1,5 @@
 {
   "name": "Proxmox Card",
   "render_readme": true,
-  "filename": "dist/proxmox-card.js"
+  "filename": "proxmox-card.js"
 }
