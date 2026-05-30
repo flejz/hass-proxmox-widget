@@ -1,6 +1,6 @@
 # Proxmox Card for Home Assistant
 
-![Preview](preview.svg)
+![Preview](preview.png)
 
 A Lovelace card that displays Proxmox VE node, VM, and container stats using the official [Proxmox VE integration](https://www.home-assistant.io/integrations/proxmoxve/).
 
