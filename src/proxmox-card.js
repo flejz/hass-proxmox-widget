@@ -1,9 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { discoverProxmoxEntities } from './utils/entity-finder.js';
-import { formatGiB, formatNetMbs } from './utils/formatters.js';
+import { formatPercent, formatGiB, formatNetMbs } from './utils/formatters.js';
 import './components/stat-bar.js';
 import './components/node-row.js';
-import './components/vm-row.js';
 import './components/card-editor.js';
 
 const MODES = ['minimal', 'normal', 'dense'];
@@ -16,27 +15,18 @@ class ProxmoxCard extends LitElement {
   };
 
   static styles = css`
-    :host {
-      display: block;
-    }
-    .card-content {
-      padding: 16px;
-    }
+    :host { display: block; }
+    .card-content { padding: 16px; }
+
+    /* ── Header ── */
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
     }
-    .title {
-      font-size: 1em;
-      font-weight: 600;
-      color: var(--primary-text-color);
-    }
-    .mode-switcher {
-      display: flex;
-      gap: 3px;
-    }
+    .title { font-size: 1em; font-weight: 600; color: var(--primary-text-color); }
+    .mode-switcher { display: flex; gap: 3px; }
     .mode-btn {
       background: none;
       border: 1px solid var(--divider-color);
@@ -54,17 +44,11 @@ class ProxmoxCard extends LitElement {
       border-color: var(--primary-color);
       color: var(--text-primary-color, #fff);
     }
-    .node-block {
-      margin-bottom: 12px;
-    }
-    .node-block:last-child {
-      margin-bottom: 0;
-    }
-    .node-divider {
-      border: none;
-      border-top: 1px solid var(--divider-color);
-      margin: 10px 0;
-    }
+
+    /* ── Layout ── */
+    .node-block { margin-bottom: 12px; }
+    .node-block:last-child { margin-bottom: 0; }
+    .node-divider { border: none; border-top: 1px solid var(--divider-color); margin: 10px 0; }
     .section-label {
       color: var(--secondary-text-color);
       font-size: 0.7em;
@@ -72,47 +56,72 @@ class ProxmoxCard extends LitElement {
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
-    /* VMs & Containers header with column labels */
-    .vm-section-header {
+    .empty { color: var(--secondary-text-color); font-size: 0.88em; padding: 12px 0; text-align: center; }
+
+    /* ── VM rows (inline rendering for pixel-perfect column alignment) ── */
+    .vm-row {
       display: flex;
       align-items: center;
-      margin: 8px 0 2px;
+      gap: 6px;
+      padding: 4px 0;
     }
-    .vm-section-title {
+    .vm-row.dense { padding: 2px 0; border-bottom: 1px solid var(--divider-color, transparent); }
+    .vr-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .vr-dot.on  { background: var(--success-color,  #43a047); }
+    .vr-dot.off { background: var(--disabled-color, #9e9e9e); }
+    .vr-name {
       flex: 1;
-      color: var(--secondary-text-color);
-      font-size: 0.7em;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--primary-text-color);
+      font-size: 0.88em;
     }
-    .vm-col-labels {
-      display: flex;
-      gap: 2px;
-      font-size: 0.62em;
-      color: var(--secondary-text-color);
+    /* Fixed px width so header labels align perfectly with data columns */
+    .vr-badge {
+      width: 28px;
+      text-align: center;
+      font-size: 0.72em;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      color: var(--secondary-text-color);
+      background: var(--divider-color);
+      border-radius: 3px;
+      padding: 2px 0;
+      flex-shrink: 0;
     }
-    .vcl {
+    .vr-stats { display: flex; gap: 2px; flex-shrink: 0; }
+    .vr-stat {
+      width: 42px;
       text-align: right;
-      width: 3.2em;
+      font-size: 0.82em;
+      font-variant-numeric: tabular-nums;
+      color: var(--secondary-text-color);
     }
-    .vcl-wide {
+    .vr-stat-wide {
+      width: 56px;
       text-align: right;
-      width: 4em;
+      font-size: 0.82em;
+      font-variant-numeric: tabular-nums;
+      color: var(--secondary-text-color);
     }
-    .vm-list {
-      display: flex;
-      flex-direction: column;
+
+    /* Column header row — same flex structure, invisible placeholders */
+    .vm-col-header { padding-top: 2px; padding-bottom: 3px; }
+    .vm-col-header .vr-dot   { visibility: hidden; }
+    .vm-col-header .vr-name  { visibility: hidden; }
+    .vm-col-header .vr-badge { visibility: hidden; }
+    .vm-col-header .vr-stat,
+    .vm-col-header .vr-stat-wide {
+      font-size: 0.68em;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--secondary-text-color);
     }
-    .vm-list[data-mode='dense'] proxmox-vm-row {
-      border-bottom: 1px solid var(--divider-color, transparent);
-    }
-    /* Network section */
-    .net-section {
-      margin-top: 4px;
-    }
+
+    /* ── Network section ── */
+    .net-section { margin-top: 4px; }
     .net-row {
       display: flex;
       align-items: center;
@@ -127,34 +136,26 @@ class ProxmoxCard extends LitElement {
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    /* Fixed px so header UP/DOWN aligns with data values */
     .net-val {
+      width: 74px;
+      text-align: right;
       font-variant-numeric: tabular-nums;
       color: var(--secondary-text-color);
       font-size: 0.88em;
-      min-width: 5.5em;
-      text-align: right;
     }
-    .net-dir {
-      opacity: 0.55;
+    .net-header { padding-bottom: 2px; }
+    .net-header .net-name { visibility: hidden; }
+    .net-header .net-val {
+      font-size: 0.7em;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
-    /* Storage section */
-    .storage-section {
-      margin-top: 4px;
-    }
-    .storage-item {
-      margin-bottom: 4px;
-    }
-    .storage-name {
-      font-size: 0.8em;
-      color: var(--primary-text-color);
-      margin-bottom: 1px;
-    }
-    .empty {
-      color: var(--secondary-text-color);
-      font-size: 0.88em;
-      padding: 12px 0;
-      text-align: center;
-    }
+
+    /* ── Storage section ── */
+    .storage-section { margin-top: 4px; }
+    .storage-item { margin-bottom: 4px; }
+    .storage-name { font-size: 0.8em; color: var(--primary-text-color); margin-bottom: 1px; }
   `;
 
   static getStubConfig() {
@@ -176,9 +177,7 @@ class ProxmoxCard extends LitElement {
       sort_vms: 'name',
       ...config,
     };
-    if (!MODES.includes(this._config.mode)) {
-      this._config.mode = 'normal';
-    }
+    if (!MODES.includes(this._config.mode)) this._config.mode = 'normal';
     this._mode = null;
   }
 
@@ -186,24 +185,20 @@ class ProxmoxCard extends LitElement {
     return this._mode ?? this._config?.mode ?? 'normal';
   }
 
-  _switchMode(mode) {
-    this._mode = mode;
-  }
+  _switchMode(mode) { this._mode = mode; }
 
   _sortVms(vms) {
     const key = this._config?.sort_vms ?? 'name';
-    if (key === 'name') return vms; // already sorted by entity-finder
+    if (key === 'name') return vms;
     return [...vms].sort((a, b) => {
-      const stateOf = (vm, role) => parseFloat(vm.entities?.[role]?.state?.state) || 0;
+      const v = (vm, role) => parseFloat(vm.entities?.[role]?.state?.state) || 0;
       const roleMap = { cpu: 'cpu', ram: 'memory_pct', disk: 'disk_gb' };
-      const role = roleMap[key] ?? 'cpu';
-      return stateOf(b, role) - stateOf(a, role); // descending
+      return v(b, roleMap[key] ?? 'cpu') - v(a, roleMap[key] ?? 'cpu');
     });
   }
 
   render() {
     if (!this.hass || !this._config) return html``;
-
     const { nodes, vms: rawVms, storages } = discoverProxmoxEntities(this.hass, this._config);
     const vms = this._sortVms(rawVms);
     const mode = this._activeMode;
@@ -225,12 +220,9 @@ class ProxmoxCard extends LitElement {
       <div class="header">
         <span class="title">${this._config.title}</span>
         <div class="mode-switcher" role="group" aria-label="Display mode">
-          ${MODES.map((m) => html`
-            <button
-              class="mode-btn"
-              aria-pressed=${mode === m ? 'true' : 'false'}
-              @click=${() => this._switchMode(m)}
-            >${m}</button>
+          ${MODES.map(m => html`
+            <button class="mode-btn" aria-pressed=${mode === m ? 'true' : 'false'}
+              @click=${() => this._switchMode(m)}>${m}</button>
           `)}
         </div>
       </div>
@@ -238,95 +230,108 @@ class ProxmoxCard extends LitElement {
   }
 
   _renderNodes(nodes, vms, storages, mode) {
-    const orphanVms = vms.filter(
-      (vm) => !nodes.find((n) => n.device_id === vm.node_device_id)
-    );
+    const orphanVms = vms.filter(vm => !nodes.find(n => n.device_id === vm.node_device_id));
 
     if (nodes.length === 0) {
       return html`
         ${this._renderVmSection(vms, mode)}
-        ${this._renderNetworkSection(vms, mode)}
-        ${this._renderStorageSection(storages, mode)}
+        ${this._config.show_network !== false ? this._renderNetworkSection(vms, mode) : ''}
+        ${this._config.show_storage !== false ? this._renderStorageSection(storages, mode) : ''}
       `;
     }
 
     return html`
       ${nodes.map((node, idx) => {
-        const nodeVms = vms.filter((vm) => vm.node_device_id === node.device_id);
-        const nodeStorages = storages.filter((s) => s.node_device_id === node.device_id);
+        const nodeVms = vms.filter(vm => vm.node_device_id === node.device_id);
+        const nodeStorages = storages.filter(s => s.node_device_id === node.device_id);
         return html`
           ${idx > 0 ? html`<hr class="node-divider">` : ''}
           <div class="node-block">
             <proxmox-node-row .group=${node} .mode=${mode}></proxmox-node-row>
-            ${nodeVms.length > 0
-              ? html`
-                  ${this._renderVmSection(nodeVms, mode)}
-                  ${this._config.show_network !== false ? this._renderNetworkSection(nodeVms, mode) : ''}
-                `
-              : ''}
+            ${nodeVms.length > 0 ? html`
+              ${this._renderVmSection(nodeVms, mode)}
+              ${this._config.show_network !== false ? this._renderNetworkSection(nodeVms, mode) : ''}
+            ` : ''}
             ${nodeStorages.length > 0 && this._config.show_storage !== false
-              ? this._renderStorageSection(nodeStorages, mode)
-              : ''}
+              ? this._renderStorageSection(nodeStorages, mode) : ''}
           </div>
         `;
       })}
-      ${orphanVms.length > 0
-        ? html`
-            <hr class="node-divider">
-            ${this._renderVmSection(orphanVms, mode)}
-            ${this._config.show_network !== false ? this._renderNetworkSection(orphanVms, mode) : ''}
-          `
-        : ''}
+      ${orphanVms.length > 0 ? html`
+        <hr class="node-divider">
+        ${this._renderVmSection(orphanVms, mode)}
+        ${this._config.show_network !== false ? this._renderNetworkSection(orphanVms, mode) : ''}
+      ` : ''}
       ${(() => {
-          const orphanStorages = storages.filter(s => !nodes.find(n => n.device_id === s.node_device_id));
-          return orphanStorages.length > 0 && this._config.show_storage !== false
-            ? this._renderStorageSection(orphanStorages, mode)
-            : '';
-        })()}
+        const o = storages.filter(s => !nodes.find(n => n.device_id === s.node_device_id));
+        return o.length > 0 && this._config.show_storage !== false
+          ? this._renderStorageSection(o, mode) : '';
+      })()}
+    `;
+  }
+
+  _renderVmRow(vm, mode) {
+    const minimal = mode === 'minimal';
+    const dense = mode === 'dense';
+    const s = role => vm.entities?.[role]?.state?.state ?? null;
+    const isOn = s('running') === 'on';
+    return html`
+      <div class="vm-row ${dense ? 'dense' : ''}">
+        <div class="vr-dot ${isOn ? 'on' : 'off'}"></div>
+        <span class="vr-name">${vm.name}</span>
+        ${!minimal ? html`<span class="vr-badge">${vm.type === 'vm' ? 'VM' : 'CT'}</span>` : ''}
+        ${!minimal ? html`
+          <div class="vr-stats">
+            <span class="vr-stat">${formatPercent(s('cpu'))}</span>
+            <span class="vr-stat">${formatPercent(s('memory_pct'))}</span>
+            <span class="vr-stat-wide">${formatGiB(s('disk_gb'))}</span>
+          </div>
+        ` : ''}
+      </div>
     `;
   }
 
   _renderVmSection(vmList, mode) {
     if (!vmList.length) return html``;
+    const minimal = mode === 'minimal';
     return html`
-      <div class="vm-section-header">
-        <span class="vm-section-title">VMs &amp; Containers</span>
-        ${mode !== 'minimal'
-          ? html`
-              <div class="vm-col-labels">
-                <span class="vcl">CPU</span>
-                <span class="vcl">MEM</span>
-                <span class="vcl-wide">DSK</span>
-              </div>
-            `
-          : ''}
-      </div>
-      <div class="vm-list" data-mode=${mode}>
-        ${vmList.map((vm) => html`
-          <proxmox-vm-row .group=${vm} mode=${mode}></proxmox-vm-row>
-        `)}
-      </div>
+      <div class="section-label" style="margin: 8px 0 2px">VMs &amp; Containers</div>
+      ${!minimal ? html`
+        <div class="vm-row vm-col-header">
+          <div class="vr-dot"></div>
+          <span class="vr-name"></span>
+          <span class="vr-badge"></span>
+          <div class="vr-stats">
+            <span class="vr-stat">CPU</span>
+            <span class="vr-stat">MEM</span>
+            <span class="vr-stat-wide">DSK</span>
+          </div>
+        </div>
+      ` : ''}
+      <div>${vmList.map(vm => this._renderVmRow(vm, mode))}</div>
     `;
   }
 
   _renderNetworkSection(vmList, mode) {
     if (mode === 'minimal') return html``;
-    const withNet = vmList.filter(
-      (vm) => vm.entities.net_in_mbs || vm.entities.net_out_mbs
-    );
+    const withNet = vmList.filter(vm => vm.entities.net_in_mbs || vm.entities.net_out_mbs);
     if (!withNet.length) return html``;
-
     return html`
       <div class="section-label" style="margin-top:10px">Network</div>
       <div class="net-section">
-        ${withNet.map((vm) => {
+        <div class="net-row net-header">
+          <span class="net-name"></span>
+          <span class="net-val">UP</span>
+          <span class="net-val">DOWN</span>
+        </div>
+        ${withNet.map(vm => {
           const netIn = vm.entities.net_in_mbs?.state?.state;
           const netOut = vm.entities.net_out_mbs?.state?.state;
           return html`
             <div class="net-row">
               <span class="net-name">${vm.name}</span>
-              <span class="net-val"><span class="net-dir">↑</span> ${formatNetMbs(netOut)}</span>
-              <span class="net-val"><span class="net-dir">↓</span> ${formatNetMbs(netIn)}</span>
+              <span class="net-val">${formatNetMbs(netOut)}</span>
+              <span class="net-val">${formatNetMbs(netIn)}</span>
             </div>
           `;
         })}
@@ -335,23 +340,17 @@ class ProxmoxCard extends LitElement {
   }
 
   _renderStorageSection(storageList, mode) {
-    if (mode === 'minimal') return html``;
-    if (!storageList.length) return html``;
-
+    if (mode === 'minimal' || !storageList.length) return html``;
     return html`
       <div class="section-label" style="margin-top:10px">Storage</div>
       <div class="storage-section">
-        ${storageList.map((s) => {
+        ${storageList.map(s => {
           const usedGb = s.entities.used_gb?.state?.state;
           const pct = parseFloat(s.entities.used_pct?.state?.state) || 0;
           return html`
             <div class="storage-item">
               <div class="storage-name">${s.name}</div>
-              <proxmox-stat-bar
-                .label=${' '}
-                .value=${formatGiB(usedGb)}
-                .percent=${pct}
-              ></proxmox-stat-bar>
+              <proxmox-stat-bar .label=${' '} .value=${formatGiB(usedGb)} .percent=${pct}></proxmox-stat-bar>
             </div>
           `;
         })}
@@ -359,9 +358,7 @@ class ProxmoxCard extends LitElement {
     `;
   }
 
-  getCardSize() {
-    return 3;
-  }
+  getCardSize() { return 3; }
 }
 
 customElements.define('proxmox-card', ProxmoxCard);
