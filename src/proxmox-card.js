@@ -5,7 +5,7 @@ import './components/stat-bar.js';
 import './components/node-row.js';
 import './components/card-editor.js';
 
-const MODES = ['minimal', 'normal', 'dense'];
+const MODES = ['normal', 'dense'];
 
 class ProxmoxCard extends LitElement {
   static properties = {
@@ -174,7 +174,12 @@ class ProxmoxCard extends LitElement {
       exclude: [],
       show_network: true,
       show_storage: true,
+      show_vm_cpu: true,
+      show_vm_mem: true,
+      show_vm_disk: true,
       sort_vms: 'name',
+      nodes: null,
+      vms: null,
       ...config,
     };
     if (!MODES.includes(this._config.mode)) this._config.mode = 'normal';
@@ -199,8 +204,11 @@ class ProxmoxCard extends LitElement {
 
   render() {
     if (!this.hass || !this._config) return html``;
-    const { nodes, vms: rawVms, storages } = discoverProxmoxEntities(this.hass, this._config);
-    const vms = this._sortVms(rawVms);
+    const { nodes: allNodes, vms: allVms, storages } = discoverProxmoxEntities(this.hass, this._config);
+    const nodeFilter = this._config.nodes;
+    const vmFilter = this._config.vms;
+    const nodes = nodeFilter === null ? allNodes : allNodes.filter(n => nodeFilter.includes(n.device_id));
+    const vms = this._sortVms(vmFilter === null ? allVms : allVms.filter(v => vmFilter.includes(v.device_id)));
     const mode = this._activeMode;
 
     return html`
@@ -271,20 +279,23 @@ class ProxmoxCard extends LitElement {
   }
 
   _renderVmRow(vm, mode) {
-    const minimal = mode === 'minimal';
     const dense = mode === 'dense';
     const s = role => vm.entities?.[role]?.state?.state ?? null;
     const isOn = s('running') === 'on';
+    const showCpu = this._config.show_vm_cpu !== false;
+    const showMem = this._config.show_vm_mem !== false;
+    const showDisk = this._config.show_vm_disk !== false;
+    const hasStats = showCpu || showMem || showDisk;
     return html`
       <div class="vm-row ${dense ? 'dense' : ''}">
         <div class="vr-dot ${isOn ? 'on' : 'off'}"></div>
         <span class="vr-name">${vm.name}</span>
-        ${!minimal ? html`<span class="vr-badge">${vm.type === 'vm' ? 'VM' : 'CT'}</span>` : ''}
-        ${!minimal ? html`
+        <span class="vr-badge">${vm.type === 'vm' ? 'VM' : 'CT'}</span>
+        ${hasStats ? html`
           <div class="vr-stats">
-            <span class="vr-stat">${formatPercent(s('cpu'))}</span>
-            <span class="vr-stat">${formatPercent(s('memory_pct'))}</span>
-            <span class="vr-stat-wide">${formatGiB(s('disk_gb'))}</span>
+            ${showCpu ? html`<span class="vr-stat">${formatPercent(s('cpu'))}</span>` : ''}
+            ${showMem ? html`<span class="vr-stat">${formatPercent(s('memory_pct'))}</span>` : ''}
+            ${showDisk ? html`<span class="vr-stat-wide">${formatGiB(s('disk_gb'))}</span>` : ''}
           </div>
         ` : ''}
       </div>
@@ -293,18 +304,21 @@ class ProxmoxCard extends LitElement {
 
   _renderVmSection(vmList, mode) {
     if (!vmList.length) return html``;
-    const minimal = mode === 'minimal';
+    const showCpu = this._config.show_vm_cpu !== false;
+    const showMem = this._config.show_vm_mem !== false;
+    const showDisk = this._config.show_vm_disk !== false;
+    const hasStats = showCpu || showMem || showDisk;
     return html`
       <div class="section-label" style="margin: 8px 0 2px">VMs &amp; Containers</div>
-      ${!minimal ? html`
+      ${hasStats ? html`
         <div class="vm-row vm-col-header">
           <div class="vr-dot"></div>
           <span class="vr-name"></span>
           <span class="vr-badge"></span>
           <div class="vr-stats">
-            <span class="vr-stat">CPU</span>
-            <span class="vr-stat">MEM</span>
-            <span class="vr-stat-wide">DSK</span>
+            ${showCpu ? html`<span class="vr-stat">CPU</span>` : ''}
+            ${showMem ? html`<span class="vr-stat">MEM</span>` : ''}
+            ${showDisk ? html`<span class="vr-stat-wide">DSK</span>` : ''}
           </div>
         </div>
       ` : ''}
@@ -313,7 +327,6 @@ class ProxmoxCard extends LitElement {
   }
 
   _renderNetworkSection(vmList, mode) {
-    if (mode === 'minimal') return html``;
     const withNet = vmList.filter(vm => vm.entities.net_in_mbs || vm.entities.net_out_mbs);
     if (!withNet.length) return html``;
     return html`
@@ -340,7 +353,7 @@ class ProxmoxCard extends LitElement {
   }
 
   _renderStorageSection(storageList, mode) {
-    if (mode === 'minimal' || !storageList.length) return html``;
+    if (!storageList.length) return html``;
     return html`
       <div class="section-label" style="margin-top:10px">Storage</div>
       <div class="storage-section">
