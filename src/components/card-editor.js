@@ -105,8 +105,11 @@ class ProxmoxCardEditor extends LitElement {
 
   _fire(key, value) {
     if (!this._config) return;
+    // Update locally so the editor re-renders immediately, regardless of whether
+    // HA calls setConfig() again after config-changed fires.
+    this._config = { ...this._config, [key]: value };
     this.dispatchEvent(new CustomEvent('config-changed', {
-      detail: { config: { ...this._config, [key]: value } },
+      detail: { config: this._config },
       bubbles: true,
       composed: true,
     }));
